@@ -51,7 +51,7 @@ object BuildDef extends Build {
       .settings(description := "Common Libraties and Utilities",
                 libraryDependencies ++= Seq(slf4j_api, logback, slf4j_log4j12),
                 libraryDependencies <++= scalaVersion {
-                  case "2.11.0" | "2.11.1" => Seq(scala_xml, scala_parser)
+                  case "2.11.8" => Seq(scala_xml, scala_parser)
                   case _ => Seq()
                 }
       )
@@ -61,14 +61,14 @@ object BuildDef extends Build {
         .dependsOn(common)
         .settings(description := "Simple Actor",
                   parallelExecution in Test := false)
-                  
+
   lazy val markdown =
     coreProject("markdown")
         .settings(description := "Markdown Parser",
                   parallelExecution in Test := false,
                   libraryDependencies <++= scalaVersion { sv => Seq(scalatest(sv), junit) },
                   libraryDependencies <++= scalaVersion {
-                    case "2.11.0" | "2.11.1" => Seq(scala_xml, scala_parser)
+                    case "2.11.8" => Seq(scala_xml, scala_parser)
                     case _ => Seq()
                   }
       )
@@ -139,7 +139,7 @@ object BuildDef extends Build {
   // Persistence Projects
   // --------------------
   lazy val persistence: Seq[ProjectReference] =
-    Seq(db, proto, jpa, mapper, record, mongodb, mongodb_record, ldap, squeryl_record)
+    Seq(db, proto, jpa, mapper, record, ldap, squeryl_record)
 
   lazy val db =
     persistenceProject("db")
@@ -173,20 +173,6 @@ object BuildDef extends Build {
     persistenceProject("squeryl-record")
         .dependsOn(record, db)
         .settings(libraryDependencies ++= Seq(h2, squeryl))
-
-  lazy val mongodb =
-    persistenceProject("mongodb")
-        .dependsOn(json_ext, util)
-        .settings(parallelExecution in Test := false,
-                  libraryDependencies += mongo_driver,
-                  initialize in Test <<= (resourceDirectory in Test) { rd =>
-                    System.setProperty("java.util.logging.config.file", (rd / "logging.properties").absolutePath)
-                  })
-
-  lazy val mongodb_record =
-    persistenceProject("mongodb-record")
-        .dependsOn(record, mongodb)
-        .settings(parallelExecution in Test := false)
 
   lazy val ldap =
     persistenceProject("ldap")
