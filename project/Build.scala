@@ -122,6 +122,7 @@ object BuildDef extends Build {
         .settings(libraryDependencies += mockito_all)
         .settings(yuiCompressor.Plugin.yuiSettings: _*)
         .settings(description := "Webkit Library",
+                  name := "lift-webkit-early-deltas-purge",
                   parallelExecution in Test := false,
                   libraryDependencies <++= scalaVersion { sv =>
                     Seq(commons_fileupload, servlet_api, specs2(sv).copy(configurations = Some("provided")), jetty6, jwebunit)

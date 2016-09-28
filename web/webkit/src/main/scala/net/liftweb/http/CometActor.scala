@@ -366,6 +366,11 @@ trait LiftCometActor extends TypedActor[Any, Any] with ForwardableActor[Any, Any
   def cometProcessingTimeout = LiftRules.cometProcessingTimeout
 
   /**
+   * Override in sub-class to customise how long partial updates are kept.
+   */
+  def cometPartialUpdateLifespan = LiftRules.cometPartialUpdateLifespan
+
+  /**
    * This is to react to comet-requests timing out.
    * When the timeout specified in {@link LiftRules#cometProcessingTimeout} occurs one may override
    * this to send a message to the user informing of the timeout.
@@ -946,6 +951,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
       }
 
     case ShutdownIfPastLifespan =>
+      purgeDeltas()
       for {
         ls <- lifespan if listeners.isEmpty && (lastListenTime + ls.millis) < millis
       } {
@@ -974,8 +980,8 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
       val delta = JsDelta(time, cmd)
       theSession.updateFunctionMap(S.functionMap, uniqueId, time)
       S.clearFunctionMap
-      val m = millis
-      deltas = (delta :: deltas).filter(d => (m - d.timestamp) < 120000L)
+      purgeDeltas()
+      deltas = delta :: deltas
       if (!listeners.isEmpty) {
         val postPage = theSession.postPageJavaScript()
         val rendered =
@@ -992,6 +998,13 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
     }
   }
 
+  /**
+   * Purges overdue deltas.
+   */
+  private def purgeDeltas(): Unit = {
+    val m = millis
+    deltas = deltas.filter(d => (m - d.timestamp) < cometPartialUpdateLifespan)
+  }
 
   /**
    * It's the main method to override, to define what is rendered by the CometActor
